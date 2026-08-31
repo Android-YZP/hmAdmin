@@ -33,8 +33,6 @@ export default {
         return json({ success: true, table, columns, rows: result.rows });
       } catch (error) {
         return json({ success: false, message: error instanceof Error ? error.message : String(error) }, 500);
-      } finally {
-        await client.end().catch(() => {});
       }
     }
 
