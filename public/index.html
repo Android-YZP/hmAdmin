@@ -2,19 +2,12 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0b0b0d" />
-    <meta
-      name="description"
-      content="一个简洁的 Cloudflare Worker 部署控制台"
-    />
-    <title>激活码管理 · Cloudflare Worker</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#101012" />
+    <title>绘梦后台</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
@@ -22,56 +15,59 @@
     <div class="ambient ambient-blue"></div>
 
     <header class="site-header">
-      <a class="brand" href="./" aria-label="激活码管理首页">
+      <a class="brand" href="#menu" id="brand-link" aria-label="返回绘梦后台首页">
         <span class="brand-mark" aria-hidden="true">✦</span>
-        <span>huimeng<span class="brand-dot">.</span>admin</span>
+        <span>绘梦<span class="brand-dot">·</span>后台</span>
       </a>
-      <div class="header-status"><span class="status-dot"></span> DATABASE CONNECTED</div>
+      <div class="header-status"><span class="status-dot"></span> ONLINE</div>
     </header>
 
     <main class="shell">
-      <section class="hero" aria-labelledby="page-title">
-        <div class="eyebrow"><span></span> SUPABASE · POSTGRESQL · HYPERDRIVE</div>
-        <h1 id="page-title">激活码，<br /><em>一眼掌握。</em></h1>
-        <p class="hero-copy">这是第一个数据库连通性测试页面。<br />Worker 会从 Supabase 拉取激活码数据并动态展示字段。</p>
+      <section class="view" id="menu-view" aria-labelledby="menu-title">
+        <div class="eyebrow"><span></span> HUIMENG ADMIN</div>
+        <h1 id="menu-title">绘梦后台</h1>
+        <p class="page-copy">选择一个功能开始管理。</p>
+
+        <div class="menu-grid" aria-label="后台功能菜单">
+          <button class="menu-item" id="activation-menu" type="button">
+            <span class="menu-icon activation-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8" cy="8" r="3.2"/><path d="m10.5 10.5 9 9M15 15l2-2m-5-1 2-2"/></svg>
+            </span>
+            <span class="menu-label">激活码管理</span>
+            <span class="menu-arrow" aria-hidden="true">→</span>
+          </button>
+        </div>
       </section>
 
-      <section class="deploy-card data-card" aria-labelledby="deploy-title">
-        <div class="card-heading">
+      <section class="view hidden" id="codes-view" aria-labelledby="codes-title">
+        <button class="back-button" id="back-button" type="button">← <span>返回菜单</span></button>
+        <div class="page-heading">
           <div>
-            <div class="card-kicker">DATABASE QUERY <span>01</span></div>
-            <h2 id="deploy-title">激活码列表</h2>
+            <div class="eyebrow"><span></span> DATABASE QUERY</div>
+            <h1 id="codes-title">激活码管理</h1>
+            <p class="page-copy"><span id="table-name">hm_activation_code</span> · 最近 100 条记录</p>
           </div>
-          <div class="sparkle" aria-hidden="true">✦</div>
+          <span class="heading-mark" aria-hidden="true">⌁</span>
         </div>
-        <p class="card-subtitle"><span id="table-name">activation_codes</span> · 最近 100 条记录</p>
-        <div class="table-wrap">
-          <table>
-            <thead id="code-head"></thead>
-            <tbody id="code-body"></tbody>
-          </table>
-          <div class="empty-state" id="empty-state">正在连接数据库…</div>
-        </div>
-        <div class="data-footer">
-          <span id="result-count">等待查询</span>
-          <button class="refresh-button" id="refresh-button" type="button">↻ 刷新</button>
-        </div>
-        <p class="notice" id="notice" role="status" aria-live="polite"></p>
-      </section>
 
-      <section class="feature-row" aria-label="产品特点">
-        <div><span>01</span><strong>Hyperdrive</strong><small>连接 Supabase 数据库</small></div>
-        <div><span>02</span><strong>Dynamic schema</strong><small>自动识别表字段</small></div>
-        <div><span>03</span><strong>Worker API</strong><small>手机端可直接调用</small></div>
+        <div class="data-card">
+          <div class="table-wrap">
+            <table>
+              <thead id="code-head"></thead>
+              <tbody id="code-body"></tbody>
+            </table>
+            <div class="empty-state" id="empty-state">正在连接数据库…</div>
+          </div>
+          <div class="data-footer">
+            <span id="result-count">等待查询</span>
+            <button class="refresh-button" id="refresh-button" type="button">↻ 刷新</button>
+          </div>
+          <p class="notice" id="notice" role="status" aria-live="polite"></p>
+        </div>
       </section>
     </main>
 
-    <footer class="site-footer">
-      <span>Built for the edge</span>
-      <span class="footer-line"></span>
-      <span>© 2026 Deploy Kit</span>
-    </footer>
-
+    <footer class="site-footer"><span>Built for the edge</span><span class="footer-line"></span><span>© 2026 绘梦后台</span></footer>
     <script src="./script.js"></script>
   </body>
 </html>

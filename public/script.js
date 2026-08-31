@@ -1,3 +1,5 @@
+const menuView = document.querySelector("#menu-view");
+const codesView = document.querySelector("#codes-view");
 const head = document.querySelector("#code-head");
 const body = document.querySelector("#code-body");
 const emptyState = document.querySelector("#empty-state");
@@ -7,11 +9,22 @@ const tableName = document.querySelector("#table-name");
 
 function escapeHtml(value) {
   return String(value ?? "")
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
+    .replaceAll("&", "&amp;").replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;").replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function showMenu() {
+  menuView.classList.remove("hidden");
+  codesView.classList.add("hidden");
+  history.replaceState(null, "", "#menu");
+}
+
+async function showCodes() {
+  menuView.classList.add("hidden");
+  codesView.classList.remove("hidden");
+  history.replaceState(null, "", "#activation-codes");
+  await loadActivationCodes();
 }
 
 async function loadActivationCodes() {
@@ -42,5 +55,12 @@ async function loadActivationCodes() {
   }
 }
 
+document.querySelector("#activation-menu").addEventListener("click", showCodes);
+document.querySelector("#back-button").addEventListener("click", showMenu);
+document.querySelector("#brand-link").addEventListener("click", (event) => {
+  event.preventDefault();
+  showMenu();
+});
 document.querySelector("#refresh-button").addEventListener("click", loadActivationCodes);
-loadActivationCodes();
+
+if (location.hash === "#activation-codes") showCodes();
