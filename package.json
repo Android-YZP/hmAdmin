@@ -1,0 +1,15 @@
+{
+  "name": "huimeng-api",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "dependencies": {
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "wrangler": "^4.35.0"
+  }
+}

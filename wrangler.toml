@@ -1,0 +1,15 @@
+name = "huimeng-api"
+main = "src/index.js"
+compatibility_date = "2026-08-30"
+compatibility_flags = ["nodejs_compat"]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "替换成你的Hyperdrive-ID"
+
+[vars]
+ACTIVATION_CODE_TABLE = "activation_codes"
