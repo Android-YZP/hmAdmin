@@ -12,4 +12,4 @@ binding = "HYPERDRIVE"
 id = "f0fb212752f14f9c948bed3b12dc9c1b"
 
 [vars]
-ACTIVATION_CODE_TABLE = "activation_codes"
+ACTIVATION_CODE_TABLE = "hm_activation_code"
