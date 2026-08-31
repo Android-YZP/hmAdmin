@@ -2,15 +2,15 @@ name = "hmadmin"
 main = "src/index.js"
 
 compatibility_date = "2026-08-31"
-compatibility_flags = ["nodejs_compat"]
 
 [assets]
 directory = "./public"
 binding = "ASSETS"
 
-[[hyperdrive]]
-binding = "HYPERDRIVE"
-id = "f0fb212752f14f9c948bed3b12dc9c1b"
+[[d1_databases]]
+binding = "DB"
+database_name = "huimeng"
+database_id = "3eee9ddf-6d59-4818-a289-0802e7256258"
 
 [vars]
 ACTIVATION_CODE_TABLE = "hm_activation_code"

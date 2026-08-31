@@ -17,7 +17,7 @@ h1 { margin: 22px 0 12px; font-size: clamp(48px, 8vw, 84px); line-height: .98; l
 .menu-item { display: flex; min-height: 150px; flex-direction: column; align-items: flex-start; justify-content: space-between; padding: 18px; color: var(--text); text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 18px; cursor: pointer; transition: .2s ease; }
 .menu-item:hover, .menu-item:focus-visible { background: rgba(255,255,255,.08); border-color: var(--orange); transform: translateY(-3px); outline: none; }
 .menu-icon { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 14px; } .menu-icon svg { width: 26px; height: 26px; }
-.activation-icon { color: #ffd85e; background: rgba(255,209,79,.1); } .menu-label { margin-top: 18px; font-size: 15px; font-weight: 500; } .menu-arrow { align-self: flex-end; color: #aaa8ae; font-size: 22px; }
+.activation-icon { color: #ffd85e; background: rgba(255,209,79,.1); } .image-code-icon { color: #b19aff; background: rgba(142,111,255,.12); } .menu-label { margin-top: 18px; font-size: 15px; font-weight: 500; } .menu-arrow { align-self: flex-end; color: #aaa8ae; font-size: 22px; }
 .back-button { padding: 8px 0; color: var(--muted); background: transparent; border: 0; font: 13px "DM Mono", monospace; cursor: pointer; } .back-button:hover { color: var(--text); }
 .page-heading { display: flex; align-items: flex-start; justify-content: space-between; margin: 34px 0 42px; } .page-heading h1 { margin-bottom: 18px; } .heading-mark { color: var(--orange); font-size: 42px; }
 .data-card { width: min(920px, 100%); padding: 25px; background: var(--panel); border: 1px solid var(--line); border-radius: 22px; box-shadow: 0 24px 80px rgba(0,0,0,.32); backdrop-filter: blur(16px); }

@@ -1,6 +1,6 @@
 # Deploy Kit
 
-一个无需构建的静态 Cloudflare Worker 起始页面。
+一个使用 Cloudflare Worker + D1 的绘梦后台起始项目。
 
 ## 本地预览
 
@@ -12,9 +12,12 @@ npx serve .
 
 ## 部署到 Cloudflare
 
-将仓库连接到 Cloudflare Pages 时：
+项目使用 Worker Static Assets 和 D1：
 
-- 构建命令：留空
-- 输出目录：`.`
+- 构建命令：`npm ci`
+- 部署命令：`npx wrangler deploy`
+- 根目录：`/`
 
-如果使用 Worker Static Assets，则将本目录作为 assets 目录上传即可。页面入口为 `index.html`。
+页面入口为 `public/index.html`，数据库绑定名称为 `DB`。
+
+首次创建 D1 表结构后，可使用 `npx wrangler d1 execute huimeng --remote --file=./schema.sql` 执行 SQL。
