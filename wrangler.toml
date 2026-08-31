@@ -1,6 +1,6 @@
 name = "huimeng-api"
 main = "src/index.js"
-compatibility_date = "2026-08-30"
+compatibility_date = "2026-08-31"
 compatibility_flags = ["nodejs_compat"]
 
 [assets]
