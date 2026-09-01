@@ -36,6 +36,7 @@
             <span class="menu-label">激活码管理</span>
             <span class="menu-arrow" aria-hidden="true">→</span>
           </button>
+          <button class="menu-item" id="channel-menu" type="button"><span class="menu-icon channel-icon" aria-hidden="true">☷</span><span class="menu-label">免费通道</span><span class="menu-arrow" aria-hidden="true">→</span></button>
           <button class="menu-item placeholder-item" id="image-code-menu" type="button" aria-label="出图授权码管理，功能即将开放">
             <span class="menu-icon image-code-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="5" width="16" height="14" rx="3"/><path d="M8 15l2.5-3 2 2 1.5-2 2 3M8 9h.01"/></svg>
@@ -44,6 +45,13 @@
             <span class="menu-arrow" aria-hidden="true">→</span>
           </button>
         </div>
+      </section>
+
+      <section class="view hidden" id="channels-view" aria-labelledby="channels-title">
+        <button class="back-button" id="channels-back-button" type="button">← <span>返回菜单</span></button>
+        <div class="page-heading"><div><div class="eyebrow"><span></span> FREE CHANNEL ROUTER</div><h1 id="channels-title">免费通道</h1><p class="page-copy">配置 App 可租赁的上游通道。API Key 在列表中会自动脱敏。</p></div><span class="heading-mark" aria-hidden="true">⌁</span></div>
+        <div class="filter-card channel-filter"><label>通道名称<input id="channel-name-filter" placeholder="请输入名称" /></label><label>状态<select id="channel-enabled-filter"><option value="">全部状态</option><option value="1">启用</option><option value="0">禁用</option></select></label><div class="filter-actions"><button class="primary-button" id="channel-search-button" type="button">⌕ 搜索</button><button class="ghost-button" id="channel-reset-button" type="button">↺ 重置</button></div></div>
+        <div class="data-card"><div class="toolbar"><button class="primary-button" id="channel-add-button" type="button">＋ 新增通道</button><button class="ghost-button" id="channel-refresh-button" type="button">↻ 刷新</button></div><div class="channel-list" id="channel-list"></div><div class="data-footer"><span id="channel-result-count">等待查询</span><div class="pagination"><button id="channel-prev-page" type="button">←</button><span id="channel-page-number">第 1 页</span><button id="channel-next-page" type="button">→</button><select id="channel-page-size"><option>10</option><option>20</option><option>50</option></select></div></div><p class="notice" id="channel-notice" role="status" aria-live="polite"></p></div>
       </section>
 
       <section class="view hidden" id="codes-view" aria-labelledby="codes-title">
@@ -83,6 +91,7 @@
 
     <dialog id="generate-dialog"><form method="dialog" id="generate-form"><div class="dialog-heading"><h2>生成激活码</h2><button value="cancel" aria-label="关闭">×</button></div><label>生成数量<input id="generate-count" type="number" min="1" max="500" value="1" required /></label><label>卡类型<select id="generate-type"><option value="TRIAL">体验卡（3天）</option><option value="MONTH" selected>月卡（30天）</option><option value="YEAR">年卡（365天）</option><option value="PERMANENT">永久卡（99年）</option><option value="CUSTOM">自定义卡</option></select></label><label id="valid-days-field" class="hidden-field">有效天数<input id="generate-days" type="number" min="1" max="36500" value="30" /></label><label>备注<textarea id="generate-remark" rows="3" placeholder="可选"></textarea></label><div class="dialog-actions"><button value="cancel" class="ghost-button">取消</button><button id="submit-generate" value="default" class="primary-button">确定生成</button></div></form></dialog>
     <dialog id="expires-dialog"><form method="dialog" id="expires-form"><div class="dialog-heading"><h2>修改到期时间</h2><button value="cancel" aria-label="关闭">×</button></div><label>到期时间<input id="expires-value" type="datetime-local" /></label><p class="dialog-hint">清空时间后，该激活码将按永久有效处理。</p><div class="dialog-actions"><button value="cancel" class="ghost-button">取消</button><button id="submit-expires" value="default" class="primary-button">保存</button></div></form></dialog>
+    <dialog id="channel-dialog"><form method="dialog" id="channel-form"><div class="dialog-heading"><h2 id="channel-dialog-title">新增免费通道</h2><button value="cancel" aria-label="关闭">×</button></div><label>通道名称<input id="channel-name" required maxlength="100" /></label><label>Base URL<input id="channel-base-url" required /></label><label>模型 ID<input id="channel-model" required /></label><label>API Key<input id="channel-api-key" type="password" placeholder="编辑时留空表示保留原 Key" /></label><label>API 格式<select id="channel-api-format"><option value="openai_compat">OpenAI Compatible</option><option value="openai_responses">OpenAI Responses</option><option value="claude_messages">Claude Messages</option><option value="gemini_interactions">Gemini Interactions</option></select></label><label>请求路径（可选）<input id="channel-request-path" placeholder="留空由客户端按格式推导" /></label><label>额外请求头 JSON（可选）<textarea id="channel-headers" rows="4" placeholder='例如：{"X-Provider":"free"}'></textarea></label><div class="channel-form-row"><label>启用状态<select id="channel-enabled"><option value="1">启用</option><option value="0">禁用</option></select></label><label>排序<input id="channel-sort" type="number" step="1" value="0" /></label></div><label>备注<textarea id="channel-remark" rows="2"></textarea></label><div class="dialog-actions"><button value="cancel" class="ghost-button">取消</button><button id="submit-channel" value="default" class="primary-button">保存</button></div></form></dialog>
 
     <footer class="site-footer"><span>Built for the edge</span><span class="footer-line"></span><span>© 2026 绘梦后台</span></footer>
     <script src="./script.js"></script>

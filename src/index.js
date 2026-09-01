@@ -35,6 +35,45 @@ function localDateToEpoch(value) {
 }
 function nowText() { return new Date().toLocaleString("sv-SE", { timeZone: "Asia/Shanghai", hour12: false }).replace("T", " "); }
 function plusDaysText(days) { return new Date(Date.now() + days * 86400000).toLocaleString("sv-SE", { timeZone: "Asia/Shanghai", hour12: false }).replace("T", " "); }
+const FREE_CHANNEL_FORMATS = ["openai_compat", "openai_responses", "claude_messages", "gemini_interactions"];
+function getFreeChannelTable(env) {
+  const table = env.FREE_CHANNEL_TABLE || "hm_free_channel";
+  if (!IDENTIFIER.test(table)) throw new Error("免费通道表名配置不合法");
+  return table;
+}
+function trimOrNull(value) { const text = String(value ?? "").trim(); return text || null; }
+function parseChannelHeaders(value) {
+  if (!trimOrNull(value)) return {};
+  try {
+    const parsed = typeof value === "string" ? JSON.parse(value) : value;
+    if (!parsed || Array.isArray(parsed) || typeof parsed !== "object") throw new Error();
+    return Object.fromEntries(Object.entries(parsed).map(([key, item]) => [String(key), String(item)]));
+  } catch { throw new Error("额外请求头 JSON 格式不正确"); }
+}
+function maskSecret(value) {
+  const text = String(value || "");
+  return text.length <= 8 ? (text ? "••••••••" : "") : `${text.slice(0, 4)}••••${text.slice(-4)}`;
+}
+function channelForAdmin(row) { return { ...row, api_key: maskSecret(row.api_key), has_api_key: Boolean(row.api_key) }; }
+async function validateFreeChannel(data, existing = null) {
+  const name = trimOrNull(data.name), baseUrl = trimOrNull(data.baseUrl ?? data.base_url), model = trimOrNull(data.model);
+  const apiKey = trimOrNull(data.apiKey ?? data.api_key) || existing?.api_key || null;
+  const apiFormat = trimOrNull(data.apiFormat ?? data.api_format) || "openai_compat";
+  const requestPath = trimOrNull(data.requestPath ?? data.request_path);
+  const headersInput = data.headersJson ?? data.headers_json;
+  const headersJson = trimOrNull(headersInput) ? JSON.stringify(parseChannelHeaders(headersInput)) : null;
+  const enabled = Number(data.enabled ?? existing?.enabled ?? 1);
+  const sort = Number(data.sort ?? existing?.sort ?? 0);
+  if (!name) throw new Error("通道名称不能为空");
+  if (name.length > 100) throw new Error("通道名称不能超过100个字符");
+  if (!baseUrl) throw new Error("Base URL不能为空");
+  if (!model) throw new Error("模型ID不能为空");
+  if (!apiKey) throw new Error("API Key不能为空");
+  if (!FREE_CHANNEL_FORMATS.includes(apiFormat)) throw new Error("API 格式不支持");
+  if (!Number.isInteger(enabled) || ![0, 1].includes(enabled)) throw new Error("启用状态不合法");
+  if (!Number.isInteger(sort)) throw new Error("排序值必须是整数");
+  return { name, baseUrl, model, apiKey, apiFormat, requestPath, headersJson, enabled, sort, remark: trimOrNull(data.remark) };
+}
 function base64Bytes(value) {
   const binary = atob(value);
   return Uint8Array.from(binary, (char) => char.charCodeAt(0));
@@ -67,6 +106,61 @@ async function readJson(request) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    if (url.pathname.startsWith("/api/app/free-channel/")) {
+      try {
+        if (request.method !== "POST" || url.pathname !== "/api/app/free-channel/lease") return appResult(null, "不支持的请求", 405);
+        const table = getFreeChannelTable(env);
+        const result = await env.DB.prepare(`SELECT * FROM "${table}" WHERE enabled = 1 ORDER BY sort ASC, id ASC`).all();
+        const channels = result.results || [];
+        if (!channels.length) return appResult(null, "当前没有可用的免费通道", 400);
+        const selected = channels.length === 1 ? channels[0] : channels[Math.floor(Math.random() * channels.length)];
+        return appResult({ channelName: selected.name, baseUrl: selected.base_url, model: selected.model, apiKey: selected.api_key, apiFormat: selected.api_format || "openai_compat", path: selected.request_path || null, headers: parseChannelHeaders(selected.headers_json) });
+      } catch (error) { return appResult(null, errorMessage(error), 500); }
+    }
+
+    if (url.pathname.startsWith("/api/free-channels")) {
+      try {
+        const table = getFreeChannelTable(env);
+        if (url.pathname === "/api/free-channels" && request.method === "GET") {
+          const page = Math.max(1, Number(url.searchParams.get("page") || 1));
+          const pageSize = Math.min(100, Math.max(1, Number(url.searchParams.get("pageSize") || 10)));
+          const name = url.searchParams.get("name")?.trim(); const enabledParam = url.searchParams.get("enabled");
+          const where = ["1 = 1"]; const binds = [];
+          if (name) { where.push("name LIKE ?"); binds.push(`%${name}%`); }
+          if (enabledParam !== null && enabledParam !== "") { where.push("enabled = ?"); binds.push(Number(enabledParam)); }
+          const condition = where.join(" AND ");
+          const total = await env.DB.prepare(`SELECT COUNT(*) AS total FROM "${table}" WHERE ${condition}`).bind(...binds).first();
+          const rows = await env.DB.prepare(`SELECT * FROM "${table}" WHERE ${condition} ORDER BY sort ASC, id DESC LIMIT ? OFFSET ?`).bind(...binds, pageSize, (page - 1) * pageSize).all();
+          return json({ success: true, rows: (rows.results || []).map(channelForAdmin), page, pageSize, total: Number(total?.total || 0) });
+        }
+        const detail = url.pathname.match(/^\/api\/free-channels\/(\d+)$/);
+        if (detail && request.method === "GET") {
+          const row = await env.DB.prepare(`SELECT * FROM "${table}" WHERE id = ?`).bind(Number(detail[1])).first();
+          return row ? json({ success: true, row: channelForAdmin(row) }) : json({ success: false, message: "免费通道不存在" }, 404);
+        }
+        if (url.pathname === "/api/free-channels" && request.method === "POST") {
+          const data = await validateFreeChannel(await readJson(request));
+          await env.DB.prepare(`INSERT INTO "${table}" (name, base_url, model, api_key, api_format, request_path, headers_json, enabled, sort, remark, create_time, update_time) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`).bind(data.name, data.baseUrl, data.model, data.apiKey, data.apiFormat, data.requestPath, data.headersJson, data.enabled, data.sort, data.remark).run();
+          return json({ success: true });
+        }
+        const mutation = url.pathname.match(/^\/api\/free-channels\/(\d+)$/);
+        if (mutation && request.method === "PUT") {
+          const id = Number(mutation[1]); const existing = await env.DB.prepare(`SELECT * FROM "${table}" WHERE id = ?`).bind(id).first();
+          if (!existing) return json({ success: false, message: "免费通道不存在" }, 404);
+          const data = await validateFreeChannel(await readJson(request), existing);
+          await env.DB.prepare(`UPDATE "${table}" SET name = ?, base_url = ?, model = ?, api_key = ?, api_format = ?, request_path = ?, headers_json = ?, enabled = ?, sort = ?, remark = ?, update_time = datetime('now') WHERE id = ?`).bind(data.name, data.baseUrl, data.model, data.apiKey, data.apiFormat, data.requestPath, data.headersJson, data.enabled, data.sort, data.remark, id).run();
+          return json({ success: true });
+        }
+        const remove = url.pathname.match(/^\/api\/free-channels\/([\d,]+)$/);
+        if (remove && request.method === "DELETE") {
+          const ids = remove[1].split(",").map(Number); if (!ids.length || ids.some((id) => !Number.isInteger(id))) throw new Error("请选择要删除的免费通道");
+          await env.DB.batch(ids.map((id) => env.DB.prepare(`DELETE FROM "${table}" WHERE id = ?`).bind(id)));
+          return json({ success: true });
+        }
+        return json({ success: false, message: "不支持的请求" }, 405);
+      } catch (error) { return json({ success: false, message: errorMessage(error) }, 500); }
+    }
 
     if (url.pathname.startsWith("/api/app/activation/")) {
       try {

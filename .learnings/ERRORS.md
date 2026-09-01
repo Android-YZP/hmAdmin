@@ -53,3 +53,86 @@ In a non-interactive environment, it's necessary to set a CLOUDFLARE_API_TOKEN e
 - Reproducible: yes
 - Related Files: migrations/0001_hm_activation_code.sql
 ---
+
+## [ERR-20260901-001] wrangler-remote-preview
+
+**Logged**: 2026-09-01T03:40:00-07:00
+**Priority**: medium
+**Status**: pending
+**Area**: infra
+
+### Summary
+通过 Wrangler 远程开发通道请求线上 D1 时连接中断。
+
+### Error
+```text
+Error: Network connection lost.
+```
+
+### Context
+- 启动 `wrangler dev --remote --port 8788`
+- 请求本地远程预览地址的激活码列表
+- 尚未执行激活写入
+
+### Suggested Fix
+改用已部署 Worker 地址重试，或检查远程预览通道和 Cloudflare 网络状态。
+
+### Metadata
+- Reproducible: unknown
+- Related Files: src/index.js
+---
+
+## [ERR-20260901-002] wrangler-info
+
+**Logged**: 2026-09-01T03:42:00-07:00
+**Priority**: low
+**Status**: pending
+**Area**: infra
+
+### Summary
+当前 Wrangler 版本不支持 `wrangler info` 子命令。
+
+### Error
+```text
+Unknown argument: info
+```
+
+### Context
+- 尝试读取 Worker 部署信息和访问地址
+
+### Suggested Fix
+使用 `wrangler deploy` 输出的部署地址或 Cloudflare Dashboard 查看 Worker URL。
+
+### Metadata
+- Reproducible: yes
+- Related Files: wrangler.toml
+---
+
+## [ERR-20260901-003] worker-connectivity
+
+**Logged**: 2026-09-01T03:50:00-07:00
+**Priority**: medium
+**Status**: pending
+**Area**: infra
+
+### Summary
+正式部署成功后，当前终端无法连接 Worker 的 HTTPS 地址。
+
+### Error
+```text
+Node fetch: ECONNREFUSED
+curl: (7) Failed to connect to hmadmin.huimeng.workers.dev port 443
+```
+
+### Context
+- Worker 已成功部署，版本 `0a9126a9-ac8e-4011-b7f1-1c4d2133b805`
+- 直连 `https://hmadmin.huimeng.workers.dev/` 失败
+- 尚未执行线上激活测试，因此没有改变 D1 数据
+
+### Suggested Fix
+检查当前网络出口、代理/VPN、防火墙或 DNS；在浏览器或其他网络环境访问 Worker 后再进行接口闭环测试。
+
+### Metadata
+- Reproducible: yes
+- Related Files: src/index.js, wrangler.toml
+---
