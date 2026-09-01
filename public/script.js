@@ -1,66 +1,40 @@
-const menuView = document.querySelector("#menu-view");
-const codesView = document.querySelector("#codes-view");
-const head = document.querySelector("#code-head");
-const body = document.querySelector("#code-body");
-const emptyState = document.querySelector("#empty-state");
-const notice = document.querySelector("#notice");
-const resultCount = document.querySelector("#result-count");
-const tableName = document.querySelector("#table-name");
+const $ = (selector) => document.querySelector(selector);
+const menuView = $("#menu-view");
+const codesView = $("#codes-view");
+const head = $("#code-head");
+const body = $("#code-body");
+const emptyState = $("#empty-state");
+const notice = $("#notice");
+const resultCount = $("#result-count");
+const tableName = $("#table-name");
+const state = { page: 1, pageSize: 10, total: 0, rows: [], editingId: null };
+const cardLabels = { TRIAL: "体验卡（3天）", MONTH: "月卡（30天）", YEAR: "年卡（365天）", PERMANENT: "永久卡（99年）", CUSTOM: "自定义卡" };
+const statusLabels = { 0: ["未激活", "status-unused"], 1: ["已激活", "status-used"], 2: ["已禁用", "status-disabled"] };
 
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replaceAll("&", "&amp;").replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;").replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+function escapeHtml(value) { return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;"); }
+function showMenu() { menuView.classList.remove("hidden"); codesView.classList.add("hidden"); history.replaceState(null, "", "#menu"); }
+async function showCodes() { menuView.classList.add("hidden"); codesView.classList.remove("hidden"); history.replaceState(null, "", "#activation-codes"); await loadActivationCodes(); }
+function queryParams() { const params = new URLSearchParams({ page: state.page, pageSize: state.pageSize }); [["code", $("#code-filter").value.trim()], ["deviceId", $("#device-filter").value.trim()], ["status", $("#status-filter").value]].forEach(([key, value]) => value && params.set(key, value)); return params; }
+function formatDate(value) { return value ? String(value).replace("T", " ") : "—"; }
+function renderTable(columns) {
+  const preferred = ["id", "code", "status", "card_type", "valid_days", "activated_at", "expires_at", "device_id", "device_name", "app_version", "issue_ip"];
+  const visible = preferred.filter((column) => columns.includes(column));
+  const labels = { id: "编号", code: "激活码", status: "状态", card_type: "卡类型", valid_days: "有效天数", activated_at: "激活时间", expires_at: "到期时间", device_id: "设备标识", device_name: "设备名称", app_version: "版本", issue_ip: "IP 地址" };
+  head.innerHTML = `<tr>${visible.map((column) => `<th>${labels[column]}</th>`).join("")}<th>操作</th></tr>`;
+  body.innerHTML = state.rows.map((row) => `<tr>${visible.map((column) => `<td class="cell-${column}">${column === "status" ? `<span class="status ${statusLabels[row[column]]?.[1] || ""}">${statusLabels[row[column]]?.[0] || "未知"}</span>` : column === "card_type" ? escapeHtml(cardLabels[row[column]] || row[column]) : escapeHtml(formatDate(row[column]))}</td>`).join("")}<td class="actions"><button class="row-action" data-action="expires" data-id="${row.id}">改到期</button><button class="row-action" data-action="reset" data-id="${row.id}">解绑</button><button class="row-action ${row.status === 2 ? "action-enable" : "action-disable"}" data-action="${row.status === 2 ? "enable" : "disable"}" data-id="${row.id}">${row.status === 2 ? "启用" : "禁用"}</button></td></tr>`).join("");
+  emptyState.hidden = state.rows.length > 0; emptyState.textContent = state.rows.length ? "" : "没有符合条件的记录";
 }
-
-function showMenu() {
-  menuView.classList.remove("hidden");
-  codesView.classList.add("hidden");
-  history.replaceState(null, "", "#menu");
-}
-
-async function showCodes() {
-  menuView.classList.add("hidden");
-  codesView.classList.remove("hidden");
-  history.replaceState(null, "", "#activation-codes");
-  await loadActivationCodes();
-}
-
 async function loadActivationCodes() {
-  emptyState.hidden = false;
-  emptyState.textContent = "正在连接数据库…";
-  head.innerHTML = "";
-  body.innerHTML = "";
-  notice.textContent = "";
-
-  try {
-    const response = await fetch("/api/activation-codes");
-    const payload = await response.json();
-    if (!response.ok || !payload.success) throw new Error(payload.message || "查询失败");
-
-    tableName.textContent = payload.table;
-    head.innerHTML = `<tr>${payload.columns.map((column) => `<th>${escapeHtml(column)}</th>`).join("")}</tr>`;
-    body.innerHTML = payload.rows.map((row) =>
-      `<tr>${payload.columns.map((column) => `<td>${escapeHtml(row[column])}</td>`).join("")}</tr>`
-    ).join("");
-    emptyState.hidden = payload.rows.length > 0;
-    emptyState.textContent = payload.rows.length ? "" : "表中暂无数据";
-    resultCount.textContent = `共 ${payload.rows.length} 条记录`;
-  } catch (error) {
-    emptyState.hidden = false;
-    emptyState.textContent = "数据库连接失败";
-    resultCount.textContent = "查询失败";
-    notice.textContent = error.message;
-  }
+  emptyState.hidden = false; emptyState.textContent = "正在连接数据库…"; notice.textContent = "";
+  try { const response = await fetch(`/api/activation-codes?${queryParams()}`); const payload = await response.json(); if (!response.ok || !payload.success) throw new Error(payload.message || "查询失败"); state.rows = payload.rows || []; state.total = payload.total || 0; tableName.textContent = payload.table; renderTable(payload.columns); resultCount.textContent = `共 ${state.total} 条记录`; const pages = Math.max(1, Math.ceil(state.total / state.pageSize)); $("#page-number").textContent = `第 ${state.page} / ${pages} 页`; $("#prev-page").disabled = state.page <= 1; $("#next-page").disabled = state.page >= pages; } catch (error) { emptyState.textContent = "数据库连接失败"; resultCount.textContent = "查询失败"; notice.textContent = error.message; }
 }
+async function api(url, method = "POST", data) { const response = await fetch(url, { method, headers: data ? { "Content-Type": "application/json" } : undefined, body: data ? JSON.stringify(data) : undefined }); const payload = await response.json(); if (!response.ok || !payload.success) throw new Error(payload.message || "操作失败"); return payload; }
+function openDialog(dialog) { dialog.showModal(); }
+async function generateCodes(event) { event.preventDefault(); const type = $("#generate-type").value; const data = { count: Number($("#generate-count").value), cardType: type, validDays: type === "CUSTOM" ? Number($("#generate-days").value) : undefined, remark: $("#generate-remark").value.trim() }; const button = $("#submit-generate"); button.disabled = true; try { await api("/api/activation-codes/generate", "POST", data); $("#generate-dialog").close(); notice.textContent = `已生成 ${data.count} 个激活码`; state.page = 1; await loadActivationCodes(); } catch (error) { notice.textContent = error.message; } finally { button.disabled = false; } }
+function toInputDate(value) { return value ? String(value).replace(" ", "T").slice(0, 16) : ""; }
+async function saveExpires(event) { event.preventDefault(); const button = $("#submit-expires"); button.disabled = true; try { await api(`/api/activation-codes/${state.editingId}/expires-at`, "PUT", { expiresAt: $("#expires-value").value ? $("#expires-value").value.replace("T", " ") + ":00" : null }); $("#expires-dialog").close(); await loadActivationCodes(); } catch (error) { notice.textContent = error.message; } finally { button.disabled = false; } }
+async function handleRowAction(event) { const button = event.target.closest("button[data-action]"); if (!button) return; const row = state.rows.find((item) => String(item.id) === button.dataset.id); if (!row) return; const action = button.dataset.action; if (action === "expires") { state.editingId = row.id; $("#expires-value").value = toInputDate(row.expires_at); openDialog($("#expires-dialog")); return; } const messages = { reset: "解绑后该激活码可以重新绑定设备，确定继续？", disable: "禁用后该激活码无法通过启动校验，确定继续？", enable: "确定启用该激活码？" }; if (!confirm(messages[action])) return; try { await api(`/api/activation-codes/${row.id}/${action}`); await loadActivationCodes(); } catch (error) { notice.textContent = error.message; } }
+async function copyUnusedCodes() { const codes = state.rows.filter((row) => row.status === 0).map((row) => row.code); if (!codes.length) { notice.textContent = "当前页面没有未激活的激活码"; return; } try { await navigator.clipboard.writeText(codes.join("\n")); notice.textContent = `已复制 ${codes.length} 个未激活激活码`; } catch { notice.textContent = "复制失败，请检查浏览器剪贴板权限"; } }
 
-document.querySelector("#activation-menu").addEventListener("click", showCodes);
-document.querySelector("#back-button").addEventListener("click", showMenu);
-document.querySelector("#brand-link").addEventListener("click", (event) => {
-  event.preventDefault();
-  showMenu();
-});
-document.querySelector("#refresh-button").addEventListener("click", loadActivationCodes);
-
+$("#activation-menu").addEventListener("click", showCodes); $("#back-button").addEventListener("click", showMenu); $("#brand-link").addEventListener("click", (event) => { event.preventDefault(); showMenu(); }); $("#refresh-button").addEventListener("click", loadActivationCodes); $("#search-button").addEventListener("click", () => { state.page = 1; loadActivationCodes(); }); $("#reset-button").addEventListener("click", () => { $("#code-filter").value = ""; $("#device-filter").value = ""; $("#status-filter").value = ""; state.page = 1; loadActivationCodes(); }); $("#prev-page").addEventListener("click", () => { if (state.page > 1) { state.page--; loadActivationCodes(); } }); $("#next-page").addEventListener("click", () => { if (state.page < Math.ceil(state.total / state.pageSize)) { state.page++; loadActivationCodes(); } }); $("#page-size").addEventListener("change", (event) => { state.pageSize = Number(event.target.value); state.page = 1; loadActivationCodes(); }); $("#copy-button").addEventListener("click", copyUnusedCodes); $("#generate-button").addEventListener("click", () => openDialog($("#generate-dialog"))); $("#generate-form").addEventListener("submit", generateCodes); $("#generate-type").addEventListener("change", (event) => $("#valid-days-field").classList.toggle("hidden-field", event.target.value !== "CUSTOM")); $("#expires-form").addEventListener("submit", saveExpires); body.addEventListener("click", handleRowAction);
 if (location.hash === "#activation-codes") showCodes();

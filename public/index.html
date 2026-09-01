@@ -57,7 +57,15 @@
           <span class="heading-mark" aria-hidden="true">⌁</span>
         </div>
 
+        <div class="filter-card">
+          <label>激活码<input id="code-filter" placeholder="请输入激活码" /></label>
+          <label>设备标识<input id="device-filter" placeholder="请输入设备标识" /></label>
+          <label>状态<select id="status-filter"><option value="">全部状态</option><option value="0">未激活</option><option value="1">已激活</option><option value="2">已禁用</option></select></label>
+          <div class="filter-actions"><button class="primary-button" id="search-button" type="button">⌕ 搜索</button><button class="ghost-button" id="reset-button" type="button">↺ 重置</button></div>
+        </div>
+
         <div class="data-card">
+          <div class="toolbar"><button class="primary-button" id="generate-button" type="button">＋ 生成激活码</button><button class="ghost-button" id="copy-button" type="button">▣ 复制未激活码</button></div>
           <div class="table-wrap">
             <table>
               <thead id="code-head"></thead>
@@ -66,13 +74,15 @@
             <div class="empty-state" id="empty-state">正在连接数据库…</div>
           </div>
           <div class="data-footer">
-            <span id="result-count">等待查询</span>
-            <button class="refresh-button" id="refresh-button" type="button">↻ 刷新</button>
+            <span id="result-count">等待查询</span><div class="pagination"><button id="prev-page" type="button">←</button><span id="page-number">第 1 页</span><button id="next-page" type="button">→</button><select id="page-size"><option>10</option><option>20</option><option>50</option></select><button class="refresh-button" id="refresh-button" type="button">↻ 刷新</button></div>
           </div>
           <p class="notice" id="notice" role="status" aria-live="polite"></p>
         </div>
       </section>
     </main>
+
+    <dialog id="generate-dialog"><form method="dialog" id="generate-form"><div class="dialog-heading"><h2>生成激活码</h2><button value="cancel" aria-label="关闭">×</button></div><label>生成数量<input id="generate-count" type="number" min="1" max="500" value="1" required /></label><label>卡类型<select id="generate-type"><option value="TRIAL">体验卡（3天）</option><option value="MONTH" selected>月卡（30天）</option><option value="YEAR">年卡（365天）</option><option value="PERMANENT">永久卡（99年）</option><option value="CUSTOM">自定义卡</option></select></label><label id="valid-days-field" class="hidden-field">有效天数<input id="generate-days" type="number" min="1" max="36500" value="30" /></label><label>备注<textarea id="generate-remark" rows="3" placeholder="可选"></textarea></label><div class="dialog-actions"><button value="cancel" class="ghost-button">取消</button><button id="submit-generate" value="default" class="primary-button">确定生成</button></div></form></dialog>
+    <dialog id="expires-dialog"><form method="dialog" id="expires-form"><div class="dialog-heading"><h2>修改到期时间</h2><button value="cancel" aria-label="关闭">×</button></div><label>到期时间<input id="expires-value" type="datetime-local" /></label><p class="dialog-hint">清空时间后，该激活码将按永久有效处理。</p><div class="dialog-actions"><button value="cancel" class="ghost-button">取消</button><button id="submit-expires" value="default" class="primary-button">保存</button></div></form></dialog>
 
     <footer class="site-footer"><span>Built for the edge</span><span class="footer-line"></span><span>© 2026 绘梦后台</span></footer>
     <script src="./script.js"></script>
